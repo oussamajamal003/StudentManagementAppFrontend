@@ -7,8 +7,8 @@ interface NavbarProps {
   isLoggedIn: boolean;
   onLogin: (token: string, user: { id: number; username: string; email: string }) => void;
   onLogout: () => void;
-}
-
+} 
+ 
 export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);

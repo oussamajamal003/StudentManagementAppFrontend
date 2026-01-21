@@ -8,7 +8,7 @@ interface SidebarProps {
   onLogout: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
-}
+} 
 
 export default function Sidebar({
   isOpen,

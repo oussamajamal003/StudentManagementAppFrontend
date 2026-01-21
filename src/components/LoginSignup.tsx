@@ -8,7 +8,7 @@ interface LoginSignupProps {
 }
 
 type TabType = "login" | "signup";
-
+  
 export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupProps) {
   const [activeTab, setActiveTab] = useState<TabType>("login");
   const [isLoading, setIsLoading] = useState(false);
