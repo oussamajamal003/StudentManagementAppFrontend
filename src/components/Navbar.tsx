@@ -14,7 +14,7 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
-
+ 
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDarkMode(true);
