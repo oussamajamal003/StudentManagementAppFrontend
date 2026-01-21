@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Students from "./pages/Students";
 import { authApi } from "./api/auth.api";
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/students" element={<Students />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
