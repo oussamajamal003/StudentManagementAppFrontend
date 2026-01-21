@@ -6,7 +6,7 @@ export default function Home() {
     { label: "Active Students", value: "2,100", change: "+5.2%", trend: "up" },
     { label: "New Enrollments", value: "145", change: "-2.1%", trend: "down" },
   ];
-
+ 
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Hero Section */}
