@@ -57,10 +57,10 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
     };
   }, [showSidebar]);
 
-  const navItems = [
+  const navItems = isLoggedIn ? [
     { name: "Home", path: "/" },
     { name: "Students", path: "/students" },
-  ];
+  ] : [];
 
   return (
     <>

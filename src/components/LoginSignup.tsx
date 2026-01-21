@@ -12,7 +12,8 @@ type TabType = "login" | "signup";
 export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupProps) {
   const [activeTab, setActiveTab] = useState<TabType>("login");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -31,7 +32,8 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
     setSignupEmail("");
     setSignupPassword("");
     setSignupConfirmPassword("");
-    setError(null);
+    setGlobalError(null);
+    setFieldErrors({});
   };
 
   const handleClose = () => {
@@ -39,9 +41,50 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
     onClose();
   };
 
+  const validateLogin = () => {
+    const errors: { [key: string]: string } = {};
+    if (!loginEmail) errors.loginEmail = "Email is required";
+    if (!loginPassword) errors.loginPassword = "Password is required";
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateSignup = () => {
+    const errors: { [key: string]: string } = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!signupUsername.trim()) {
+      errors.signupUsername = "Username is required";
+    } else if (signupUsername.trim().length < 3) {
+      errors.signupUsername = "Username must be at least 3 characters";
+    }
+
+    if (!signupEmail.trim()) {
+      errors.signupEmail = "Email is required";
+    } else if (!emailRegex.test(signupEmail)) {
+      errors.signupEmail = "Please provide a valid email";
+    }
+
+    if (!signupPassword) {
+      errors.signupPassword = "Password is required";
+    } else if (signupPassword.length < 6) {
+      errors.signupPassword = "Password must be at least 6 characters";
+    }
+
+    if (signupPassword !== signupConfirmPassword) {
+      errors.signupConfirmPassword = "Passwords do not match";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setGlobalError(null);
+    
+    if (!validateLogin()) return;
+
     setIsLoading(true);
 
     try {
@@ -53,12 +96,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
         email: data.user.email
       };
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Store auth data is handled by parent or here? 
+      // Current design: App handles state, we just return token/user
+      // But we should also set localStorage here to be safe and consistent
       onSuccess(data.token, user);
       resetForms();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+    } catch (err: any) {
+      setGlobalError(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -66,38 +110,9 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setGlobalError(null);
 
-    // Client-side validation
-    if (!signupUsername.trim()) {
-      setError("Username is required");
-      return;
-    }
-    if (signupUsername.trim().length < 3) {
-      setError("Username must be at least 3 characters");
-      return;
-    }
-    if (!signupEmail.trim()) {
-      setError("Email is required");
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(signupEmail)) {
-      setError("Please provide a valid email");
-      return;
-    }
-    if (!signupPassword) {
-      setError("Password is required");
-      return;
-    }
-    if (signupPassword.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-    if (signupPassword !== signupConfirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (!validateSignup()) return;
 
     setIsLoading(true);
 
@@ -114,12 +129,10 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
         email: data.user.email
       };
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(user));
       onSuccess(data.token, user);
       resetForms();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
+    } catch (err: any) {
+      setGlobalError(err.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +180,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
         {/* Tabs */}
         <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1 mb-6">
           <button
-            onClick={() => { setActiveTab('login'); setError(null); }}
+            onClick={() => { setActiveTab('login'); setGlobalError(null); setFieldErrors({}); }}
             className={`flex-1 rounded-md py-2.5 text-sm font-medium transition-all ${
               activeTab === 'login'
                 ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
@@ -177,7 +190,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
             Login
           </button>
           <button
-            onClick={() => { setActiveTab('signup'); setError(null); }}
+            onClick={() => { setActiveTab('signup'); setGlobalError(null); setFieldErrors({}); }}
             className={`flex-1 rounded-md py-2.5 text-sm font-medium transition-all ${
               activeTab === 'signup'
                 ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
@@ -188,8 +201,8 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
           </button>
         </div>
 
-        {/* Error Message */}
-        {error && (
+        {/* Global Error Message */}
+        {globalError && (
           <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -198,7 +211,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+                <p className="text-sm font-medium text-red-800 dark:text-red-200">{globalError}</p>
               </div>
             </div>
           </div>
@@ -206,7 +219,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
 
         {/* Forms */}
         {activeTab === 'login' ? (
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email address
@@ -217,12 +230,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   name="email"
                   type="email"
                   autoComplete="email"
-                  required
+                  disabled={isLoading}
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.loginEmail ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="you@example.com"
                 />
+                {fieldErrors.loginEmail && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.loginEmail}</p>}
               </div>
             </div>
 
@@ -236,12 +250,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  required
+                  disabled={isLoading}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.loginPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="••••••••"
                 />
+                {fieldErrors.loginPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.loginPassword}</p>}
               </div>
             </div>
 
@@ -251,7 +266,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                   Remember me
@@ -268,7 +283,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 py-3 px-4 text-sm font-medium text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
             >
               {isLoading ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -280,7 +295,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
             </button>
           </form>
         ) : (
-          <form onSubmit={handleSignup} className="space-y-5">
+          <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Username
@@ -290,12 +305,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   id="username"
                   name="username"
                   type="text"
-                  required
+                  disabled={isLoading}
                   value={signupUsername}
                   onChange={(e) => setSignupUsername(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.signupUsername ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="johndoe"
                 />
+                {fieldErrors.signupUsername && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupUsername}</p>}
               </div>
             </div>
 
@@ -309,12 +325,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   name="email"
                   type="email"
                   autoComplete="email"
-                  required
+                  disabled={isLoading}
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.signupEmail ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="you@example.com"
                 />
+                {fieldErrors.signupEmail && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupEmail}</p>}
               </div>
             </div>
 
@@ -327,12 +344,13 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   id="signup-password"
                   name="password"
                   type="password"
-                  required
+                  disabled={isLoading}
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.signupPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="••••••••"
                 />
+                {fieldErrors.signupPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupPassword}</p>}
               </div>
             </div>
 
@@ -345,19 +363,20 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   id="confirm-password"
                   name="confirm-password"
                   type="password"
-                  required
+                  disabled={isLoading}
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-shadow"
+                  className={`block w-full rounded-lg border ${fieldErrors.signupConfirmPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
                   placeholder="••••••••"
                 />
+                {fieldErrors.signupConfirmPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupConfirmPassword}</p>}
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 py-3 px-4 text-sm font-medium text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
             >
               {isLoading ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
