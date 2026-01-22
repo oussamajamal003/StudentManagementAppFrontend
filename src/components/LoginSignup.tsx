@@ -132,7 +132,30 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
       onSuccess(data.token, user);
       resetForms();
     } catch (err: any) {
-      setGlobalError(err.message || "Signup failed");
+      let errorMessage = "Signup failed";
+      
+      if (err.response?.data?.error) {
+        const serverError = err.response.data.error;
+        
+        if (serverError === "User already exists") {
+          errorMessage = "An account with this email already exists. Please use a different email or try logging in.";
+        } else if (serverError === "Username already exists") {
+          errorMessage = "This username is already taken. Please choose a different username.";
+        } else if (serverError.includes("Internal server error")) {
+          // Check if it's likely a unique username constraint violation
+          if (err.response.data.details && err.response.data.details.includes("username")) {
+            errorMessage = "This username is already taken. Please choose a different username.";
+          } else {
+            errorMessage = "Something went wrong on our end. Please try again later.";
+          }
+        } else {
+          errorMessage = serverError;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setGlobalError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +257,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.loginEmail ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="you@example.com"
+                  placeholder="john.doe@example.com"
                 />
                 {fieldErrors.loginEmail && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.loginEmail}</p>}
               </div>
@@ -254,7 +277,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.loginPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                 />
                 {fieldErrors.loginPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.loginPassword}</p>}
               </div>
@@ -309,7 +332,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={signupUsername}
                   onChange={(e) => setSignupUsername(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.signupUsername ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="johndoe"
+                  placeholder="Choose a username"
                 />
                 {fieldErrors.signupUsername && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupUsername}</p>}
               </div>
@@ -329,7 +352,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.signupEmail ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="you@example.com"
+                  placeholder="john.doe@example.com"
                 />
                 {fieldErrors.signupEmail && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupEmail}</p>}
               </div>
@@ -348,7 +371,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.signupPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="••••••••"
+                  placeholder="Create a strong password"
                 />
                 {fieldErrors.signupPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupPassword}</p>}
               </div>
@@ -367,7 +390,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
                   className={`block w-full rounded-lg border ${fieldErrors.signupConfirmPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 sm:text-sm transition-all disabled:opacity-60`}
-                  placeholder="••••••••"
+                  placeholder="Confirm your password"
                 />
                 {fieldErrors.signupConfirmPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.signupConfirmPassword}</p>}
               </div>
