@@ -97,7 +97,8 @@ export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
       const user = {
         id: data.user.user_id || data.user.id,
         username: data.user.username,
-        email: data.user.email
+        email: data.user.email,
+        role: data.user.role
       };
 
       // Use auth context login
@@ -131,7 +132,8 @@ export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
       const user = {
         id: data.user.user_id || data.user.id,
         username: data.user.username,
-        email: data.user.email
+        email: data.user.email,
+        role: data.user.role
       };
 
       login(data.token, user);

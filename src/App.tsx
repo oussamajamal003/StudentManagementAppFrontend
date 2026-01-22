@@ -1,27 +1,13 @@
-import { useEffect, type ReactNode } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Students from "./pages/Students";
+import Unauthorized from "./pages/Unauthorized";
 import SplashScreen from "./components/ui/SplashScreen";
 import { useAuth } from "./context/AuthContext";
-
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, isCustomLoading } = useAuth();
-  const location = useLocation();
-  
-  if (isCustomLoading) {
-    return <SplashScreen />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
-
-  return children;
-};
+import { RoleGuard } from "./guards/RoleGuard";
 
 export default function App() {
   const { isCustomLoading } = useAuth();
@@ -42,12 +28,13 @@ export default function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           <Route 
             path="/students" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['admin']}>
                 <Students />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
         </Routes>
