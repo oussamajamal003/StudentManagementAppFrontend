@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import AvatarDropdown from "./ui/AvatarDropdown";
+import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export default function Sidebar({
   toggleDarkMode
 }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
   
   const navLinks = [
     { to: "/", label: "Home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -107,12 +110,20 @@ export default function Sidebar({
              )}
 
           {isLoggedIn ? (
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200"
-            >
-              Logout
-            </button>
+             <div className="flex items-center justify-between px-2">
+                <div className="flex items-center space-x-3">
+                   {/* We reuse the AvatarDropdown but placed at bottom opening upwards */}
+                   <AvatarDropdown onLogout={onLogout} placement="top-left" />
+                   <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px]">
+                         {user?.username}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
+                         {user?.email}
+                      </span>
+                   </div>
+                </div>
+             </div>
           ) : (
             <button
               onClick={onLoginClick}

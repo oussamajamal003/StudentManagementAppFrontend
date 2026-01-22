@@ -4,9 +4,10 @@ import ProfileModal from "../ProfileModal";
 
 interface AvatarDropdownProps {
   onLogout: () => void;
+  placement?: 'bottom-right' | 'top-right' | 'top-left';
 }
 
-export default function AvatarDropdown({ onLogout }: AvatarDropdownProps) {
+export default function AvatarDropdown({ onLogout, placement = 'bottom-right' }: AvatarDropdownProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -24,6 +25,12 @@ export default function AvatarDropdown({ onLogout }: AvatarDropdownProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const positionClasses = {
+    'bottom-right': "right-0 mt-2 origin-top-right slide-in-from-top-2",
+    'top-right': "right-0 bottom-full mb-2 origin-bottom-right slide-in-from-bottom-2",
+    'top-left': "left-0 bottom-full mb-2 origin-bottom-left slide-in-from-bottom-2"
+  }[placement];
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -35,7 +42,7 @@ export default function AvatarDropdown({ onLogout }: AvatarDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none transform origin-top-right transition-all duration-200 animate-in fade-in slide-in-from-top-2 border border-gray-100 dark:border-gray-700 z-50">
+        <div className={`absolute w-56 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 border border-gray-100 dark:border-gray-700 z-50 animate-in fade-in ${positionClasses}`}>
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{user?.username}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
