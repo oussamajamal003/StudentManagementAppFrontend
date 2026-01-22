@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import Footer from "../components/Footer";
-import { studentsApi } from "../api/students.api.ts";
-import type { Student } from "../api/students.api.ts";
+import { studentsApi } from "../api/students.api";
+import type { Student } from "../api/students.api";
 import Button from "../components/ui/Button";
 import StudentTable from "../components/students/StudentTable";
 import StudentModals from "../components/students/StudentModals";
+import { useNotification } from "../context/NotificationContext";
 
 export default function Students() {
+  const { showSuccess, showError } = useNotification();
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +39,14 @@ export default function Students() {
     try {
       setIsLoading(true);
       setError(null);
+      // Artificial delay for smoother UX (Skeleton showcase)
+      await new Promise(resolve => setTimeout(resolve, 800));
       const data = await studentsApi.getAll();
       setStudents(data);
     } catch (err: any) {
       setError(err.message || "Failed to fetch students");
       console.error(err);
+      showError("Fetch Failed", "Could not load students.");
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +120,8 @@ export default function Students() {
     setFormError(null);
     
     try {
+      // Artificial delay for form submission
+      await new Promise(resolve => setTimeout(resolve, 800));
       await studentsApi.create({
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -125,8 +131,11 @@ export default function Students() {
       await fetchStudents();
       setIsCreateOpen(false);
       resetForm();
+      showSuccess("Student Added", "The new student has been successfully created.");
     } catch (err: any) {
-      setFormError(err.response?.data?.error || err.message || "Failed to create student");
+      const errorMessage = err.response?.data?.error || err.message || "Failed to create student";
+      setFormError(errorMessage);
+      showError("Creation Failed", errorMessage);
     } finally {
       setFormLoading(false);
     }
@@ -139,6 +148,8 @@ export default function Students() {
     setFormError(null);
 
     try {
+      // Artificial delay for form submission
+      await new Promise(resolve => setTimeout(resolve, 800));
       await studentsApi.update(selectedStudent.id, {
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -148,8 +159,11 @@ export default function Students() {
       await fetchStudents();
       setIsEditOpen(false);
       resetForm();
+      showSuccess("Student Updated", "Student details have been updated.");
     } catch (err: any) {
-      setFormError(err.response?.data?.error || err.message || "Failed to update student");
+      const errorMessage = err.response?.data?.error || err.message || "Failed to update student";
+      setFormError(errorMessage);
+      showError("Update Failed", errorMessage);
     } finally {
       setFormLoading(false);
     }
@@ -160,6 +174,8 @@ export default function Students() {
     setFormLoading(true); // Re-using state for delete loading
 
     try {
+      // Artificial delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       await studentsApi.delete(selectedStudent.id);
       
       // Update local state immediately for better UX
@@ -173,10 +189,11 @@ export default function Students() {
       }
       
       setIsDeleteOpen(false);
+      showSuccess("Student Deleted", "The student record has been permanently removed.");
     } catch (err: any) {
       // If fails, refetch to ensure sync
       console.error(err);
-      alert("Failed to delete student");
+      showError("Delete Failed", "Could not delete student.");
       await fetchStudents();
     } finally {
       setFormLoading(false);

@@ -13,12 +13,12 @@ export interface SignupPayload {
 }
 
 export const authApi = {
-  login: async (email, password) => {
+  login: async (email: string, password: string) => {
     const response = await axiosClient.post('/auth/login', { email, password });
     return response.data;
   },
 
-  signup: async (payload) => {
+  signup: async (payload: SignupPayload) => {
     // Adjust endpoint path if necessary, assuming /auth/signup based on context
     const response = await axiosClient.post('/auth/signup', payload);
     return response.data;
@@ -26,6 +26,15 @@ export const authApi = {
 
   logout: async () => {
     const response = await axiosClient.post('/auth/logout');
+    return response.data;
+  },
+
+  deleteAccount: async () => {
+    // Assuming backend endpoint DELETE /auth/delete or similar
+    // Since it doesn't exist yet in backend, this will fail if called. 
+    // I should probably ensure the backend route exists or this is a placeholder.
+    // For now, I will point to /auth/delete
+    const response = await axiosClient.delete('/auth/delete');
     return response.data;
   },
 

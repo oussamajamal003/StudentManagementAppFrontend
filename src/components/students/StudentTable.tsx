@@ -1,5 +1,5 @@
-import React from 'react';
 import Button from '../ui/Button';
+import Skeleton from '../ui/Skeleton';
 import type { Student } from '../../api/students.api';
 
 interface StudentTableProps {
@@ -39,9 +39,37 @@ const StudentTable = ({
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
-        <div className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-500 dark:text-gray-400 font-medium">Loading students...</p>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700/50">
+              <tr>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <th key={i} className="px-6 py-4 text-left">
+                    <Skeleton className="h-4 w-24" />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <Skeleton className="h-10 w-10 rounded-full mr-3" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-40" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                  <td className="px-6 py-4 flex gap-2"><Skeleton className="h-8 w-8" /><Skeleton className="h-8 w-8" /><Skeleton className="h-8 w-8" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );

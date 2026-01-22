@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { authApi } from "../api/auth.api";
+import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 
 interface LoginSignupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (token: string, user: { id: number; username: string; email: string }) => void;
 }
 
 type TabType = "login" | "signup";
   
-export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupProps) {
+export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
+  const { login } = useAuth();
+  const { showError } = useNotification();
+  
   const [activeTab, setActiveTab] = useState<TabType>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -96,13 +100,14 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
         email: data.user.email
       };
 
-      // Store auth data is handled by parent or here? 
-      // Current design: App handles state, we just return token/user
-      // But we should also set localStorage here to be safe and consistent
-      onSuccess(data.token, user);
+      // Use auth context login
+      login(data.token, user);
       resetForms();
+      onClose();
     } catch (err: any) {
-      setGlobalError(err.message || "Login failed");
+      const msg = err.message || "Login failed";
+      setGlobalError(msg);
+      showError("Login Failed", msg);
     } finally {
       setIsLoading(false);
     }
@@ -129,8 +134,9 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
         email: data.user.email
       };
 
-      onSuccess(data.token, user);
+      login(data.token, user);
       resetForms();
+      onClose();
     } catch (err: any) {
       let errorMessage = "Signup failed";
       
@@ -156,6 +162,7 @@ export default function LoginSignup({ isOpen, onClose, onSuccess }: LoginSignupP
       }
       
       setGlobalError(errorMessage);
+      showError("Signup Failed", errorMessage);
     } finally {
       setIsLoading(false);
     }

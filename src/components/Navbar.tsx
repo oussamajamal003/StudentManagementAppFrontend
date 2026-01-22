@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import LoginSignup from "./LoginSignup";
 import Sidebar from "./Sidebar";
+import AvatarDropdown from "./ui/AvatarDropdown";
+import ConfirmationModal from "./ui/ConfirmationModal";
+import { useAuth } from "../context/AuthContext";
 
-interface NavbarProps {
-  isLoggedIn: boolean;
-  onLogin: (token: string, user: { id: number; username: string; email: string }) => void;
-  onLogout: () => void;
-} 
- 
-export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
+export default function Navbar() {
+  const { isAuthenticated: isLoggedIn, logout } = useAuth();
+  
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
@@ -37,13 +37,8 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
     }
   };
 
-  const handleLogout = () => {
-    onLogout();
-  };
-
-  const handleLoginSuccess = (token: string, user: { id: number; username: string; email: string }) => {
-    onLogin(token, user);
-    setShowLoginModal(false);
+  const confirmLogout = () => {
+    logout();
   };
 
   useEffect(() => {
@@ -69,7 +64,7 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
                   S
                 </div>
                 <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -85,7 +80,7 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
                   to={item.path}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     location.pathname === item.path
-                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-semibold"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800"
                   }`}
                 >
@@ -113,16 +108,11 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
 
               <div className="hidden md:block pl-2 border-l border-gray-200 dark:border-gray-700">
                 {isLoggedIn ? (
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm font-medium text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 transition-colors px-3 py-2"
-                  >
-                    Logout
-                  </button>
+                  <AvatarDropdown onLogout={() => setShowLogoutConfirm(true)} />
                 ) : (
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow active:scale-95"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95 transform"
                   >
                     Login
                   </button>
@@ -152,7 +142,7 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
         }}
         onLogout={() => {
           setShowSidebar(false);
-          handleLogout();
+          setShowLogoutConfirm(true);
         }}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
@@ -161,7 +151,16 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
       <LoginSignup
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
-        onSuccess={handleLoginSuccess}
+      />
+
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to log out? You will need to sign in again to access your account."
+        confirmText="Logout"
+        isDestructive={true}
       />
     </>
   );
