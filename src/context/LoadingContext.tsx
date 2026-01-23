@@ -17,7 +17,7 @@ export const LoadingProvider = ({ children }: { children: ReactNode }) => {
     </LoadingContext.Provider>
   );
 };
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLoading = () => {
   const context = useContext(LoadingContext);
   if (!context) {

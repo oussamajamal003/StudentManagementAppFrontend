@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { authApi } from "../api/auth.api";
 import { useNotification } from "./NotificationContext";
@@ -43,7 +43,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { showSuccess, showInfo } = useNotification();
   const location = useLocation();
 
-  const checkAuth = async (isBackground = false) => {
+  const performLogout = useCallback(async (notify: boolean = true) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await authApi.logout();
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+      setIsAuthenticated(false);
+      if (notify) {
+        showInfo("Signed out", "You have been successfully signed out.");
+      }
+    }
+  }, [showInfo]);
+
+  const checkAuth = useCallback(async (isBackground = false) => {
     if (!isBackground) {
       setIsCustomLoading(true);
       // Artificial delay for splash screen (2 seconds) only on specific pages
@@ -68,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isBackground) {
       setIsCustomLoading(false);
     }
-  };
+  }, [location.pathname, performLogout]);
 
   useEffect(() => {
     // Initial check
@@ -87,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(interval);
       window.removeEventListener('auth:unauthorized', handleAuthError);
     };
-  }, []);
+  }, [checkAuth, performLogout]);
 
   const login = (token: string, userData: User) => {
     localStorage.setItem("token", token);
@@ -96,25 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(true);
     setIsLoginModalOpen(false);
     showSuccess("Welcome back!", `Signed in as ${userData.username}`);
-  };
-
-  const performLogout = async (notify: boolean = true) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await authApi.logout();
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setUser(null);
-      setIsAuthenticated(false);
-      if (notify) {
-        showInfo("Signed out", "You have been successfully signed out.");
-      }
-    }
   };
 
   const logout = async () => {
@@ -139,7 +139,7 @@ const openLoginModal = () => setIsLoginModalOpen(true);
     </AuthContext.Provider>
   );
 };
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

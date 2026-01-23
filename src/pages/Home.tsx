@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useMemo } from "react";
 
 export default function Home() {
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -13,11 +14,11 @@ export default function Home() {
     }
   };
 
-  const stats = [
-    { label: "Total Students", value: "2,543", change: "+12.5%", trend: "up" },
-    { label: "Active Students", value: "2,100", change: "+5.2%", trend: "up" },
-    { label: "New Enrollments", value: "145", change: "-2.1%", trend: "down" },
-  ];
+  const stats = useMemo(() => [
+    { label: "Total Students", value: "2,543", change: "+12.5%", trend: "up", progress: 75 },
+    { label: "Active Students", value: "2,100", change: "+5.2%", trend: "up", progress: 82 },
+    { label: "New Enrollments", value: "145", change: "-2.1%", trend: "down", progress: 45 },
+  ], []);
  
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -73,7 +74,7 @@ export default function Home() {
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
                 <div 
                   className="bg-indigo-600 h-1.5 rounded-full" 
-                  style={{ width: `${Math.random() * 40 + 60}%` }}
+                  style={{ width: `${stat.progress}%` }}
                 />
               </div>
             </div>

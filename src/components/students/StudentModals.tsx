@@ -21,7 +21,12 @@ interface StudentModalsProps {
     email: string;
     age: string;
   };
-  setFormData: (data: any) => void;
+  setFormData: (data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    age: string;
+  }) => void;
   handleCreate: (e: React.FormEvent) => void;
   handleUpdate: (e: React.FormEvent) => void;
   handleDelete: () => void;

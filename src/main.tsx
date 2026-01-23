@@ -3,8 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider as AuthProviderOrigin } from './context/AuthContext'
-const AuthProvider = AuthProviderOrigin as any;
+import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { LoadingProvider } from './context/LoadingContext'
 

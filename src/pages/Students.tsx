@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { studentsApi } from "../api/students.api";
 import type { Student } from "../api/students.api";
 import Button from "../components/ui/Button";
 import StudentTable from "../components/students/StudentTable";
 import StudentModals from "../components/students/StudentModals";
 import { useNotification } from "../context/NotificationContext";
+import { AxiosError } from "axios";
 
 export default function Students() {
   const { showSuccess, showError } = useNotification();
@@ -35,7 +36,7 @@ export default function Students() {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch Data
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -43,18 +44,20 @@ export default function Students() {
       await new Promise(resolve => setTimeout(resolve, 800));
       const data = await studentsApi.getAll();
       setStudents(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch students");
-      console.error(err);
-      showError("Fetch Failed", "Could not load students.");
+    } catch (err: unknown) {
+       let msg = "Failed to fetch students";
+       if (err instanceof Error) msg = err.message;
+       setError(msg);
+       console.error(err);
+       showError("Fetch Failed", "Could not load students.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showError]);
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [fetchStudents]);
 
   // Filtering & Pagination Logic
   const filteredStudents = useMemo(() => {
@@ -132,8 +135,13 @@ export default function Students() {
       setIsCreateOpen(false);
       resetForm();
       showSuccess("Student Added", "The new student has been successfully created.");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || "Failed to create student";
+    } catch (err: unknown) {
+      let errorMessage = "Failed to create student";
+      if (err instanceof AxiosError && err.response?.data?.error) {
+         errorMessage = err.response.data.error;
+      } else if (err instanceof Error) {
+         errorMessage = err.message;
+      }
       setFormError(errorMessage);
       showError("Creation Failed", errorMessage);
     } finally {
@@ -160,8 +168,13 @@ export default function Students() {
       setIsEditOpen(false);
       resetForm();
       showSuccess("Student Updated", "Student details have been updated.");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || "Failed to update student";
+    } catch (err: unknown) {
+      let errorMessage = "Failed to update student";
+      if (err instanceof AxiosError && err.response?.data?.error) {
+         errorMessage = err.response.data.error;
+      } else if (err instanceof Error) {
+         errorMessage = err.message;
+      }
       setFormError(errorMessage);
       showError("Update Failed", errorMessage);
     } finally {
@@ -190,7 +203,7 @@ export default function Students() {
       
       setIsDeleteOpen(false);
       showSuccess("Student Deleted", "The student record has been permanently removed.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If fails, refetch to ensure sync
       console.error(err);
       showError("Delete Failed", "Could not delete student.");

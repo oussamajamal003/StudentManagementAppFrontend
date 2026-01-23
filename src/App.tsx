@@ -23,6 +23,7 @@ export default function App() {
     }
 
     if (location.pathname === '/' || location.pathname === '/students') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsNavigating(true);
       const timer = setTimeout(() => {
         setIsNavigating(false);

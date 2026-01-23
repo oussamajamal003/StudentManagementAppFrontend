@@ -2,6 +2,7 @@ import { useState } from "react";
 import { authApi } from "../api/auth.api";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import { AxiosError } from "axios";
 
 interface LoginSignupProps {
   isOpen: boolean;
@@ -105,8 +106,13 @@ export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
       login(data.token, user);
       resetForms();
       onClose();
-    } catch (err: any) {
-      const msg = err.message || "Login failed";
+    } catch (err: unknown) {
+      let msg = "Login failed";
+      if (err instanceof AxiosError && err.response?.data?.error) {
+         msg = err.response.data.error;
+      } else if (err instanceof Error) {
+         msg = err.message;
+      }
       setGlobalError(msg);
       showError("Login Failed", msg);
     } finally {
@@ -139,10 +145,10 @@ export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
       login(data.token, user);
       resetForms();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = "Signup failed";
       
-      if (err.response?.data?.error) {
+      if (err instanceof AxiosError && err.response?.data?.error) {
         const serverError = err.response.data.error;
         
         if (serverError === "User already exists") {
@@ -159,7 +165,7 @@ export default function LoginSignup({ isOpen, onClose }: LoginSignupProps) {
         } else {
           errorMessage = serverError;
         }
-      } else if (err.message) {
+      } else if (err instanceof Error) {
         errorMessage = err.message;
       }
       
