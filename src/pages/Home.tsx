@@ -1,6 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
+  const { isAuthenticated, openLoginModal } = useAuth();
+  const navigate = useNavigate();
+
+  const handleManageClick = () => {
+    if (isAuthenticated) {
+      navigate('/students');
+    } else {
+      openLoginModal();
+    }
+  };
+
   const stats = [
     { label: "Total Students", value: "2,543", change: "+12.5%", trend: "up" },
     { label: "Active Students", value: "2,100", change: "+5.2%", trend: "up" },
@@ -20,12 +32,12 @@ export default function Home() {
               A comprehensive enterprise solution for managing academic records, student performance, and institutional data with modern efficiency.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                to="/students"
+              <button 
+                onClick={handleManageClick}
                 className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 Manage Students
-              </Link>
+              </button>
               <button className="inline-flex items-center justify-center px-8 py-4 border border-gray-300 dark:border-gray-600 text-lg font-medium rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm hover:shadow transition-all duration-200">
                 View Reports
               </button>

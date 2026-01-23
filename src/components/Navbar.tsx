@@ -7,9 +7,8 @@ import ConfirmationModal from "./ui/ConfirmationModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const { isAuthenticated: isLoggedIn, logout } = useAuth();
+  const { isAuthenticated: isLoggedIn, logout, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
   
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -111,7 +110,7 @@ export default function Navbar() {
                   <AvatarDropdown onLogout={() => setShowLogoutConfirm(true)} />
                 ) : (
                   <button
-                    onClick={() => setShowLoginModal(true)}
+                    onClick={openLoginModal}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95 transform"
                   >
                     Login
@@ -138,7 +137,7 @@ export default function Navbar() {
         isLoggedIn={isLoggedIn}
         onLoginClick={() => {
           setShowSidebar(false);
-          setShowLoginModal(true);
+          openLoginModal();
         }}
         onLogout={() => {
           setShowSidebar(false);
@@ -149,8 +148,8 @@ export default function Navbar() {
       />
 
       <LoginSignup
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
+        isOpen={isLoginModalOpen}
+        onClose={closeLoginModal}
       />
 
       <ConfirmationModal

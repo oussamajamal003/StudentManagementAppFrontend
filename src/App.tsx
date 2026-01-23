@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -11,6 +11,26 @@ import { RoleGuard } from "./guards/RoleGuard";
 
 export default function App() {
   const { isCustomLoading } = useAuth();
+  const location = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Handle splash screen on navigation
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (location.pathname === '/' || location.pathname === '/students') {
+      setIsNavigating(true);
+      const timer = setTimeout(() => {
+        setIsNavigating(false);
+      }, 1000); // 1 second splash for navigation
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname]);
 
   // Log Web Vitals
   useEffect(() => {
@@ -18,7 +38,7 @@ export default function App() {
     console.log("App mounted - Web Vitals tracking initialized");
   }, []);
 
-  if (isCustomLoading) {
+  if (isCustomLoading || isNavigating) {
     return <SplashScreen />;
   }
 

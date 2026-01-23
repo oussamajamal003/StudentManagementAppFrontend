@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { authApi } from "../api/auth.api";
 import { useNotification } from "./NotificationContext";
 
@@ -16,6 +17,9 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  isLoginModalOpen: boolean;
+  openLoginModal: () => void;
+  closeLoginModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,12 +39,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCustomLoading, setIsCustomLoading] = useState(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { showSuccess, showInfo } = useNotification();
+  const location = useLocation();
 
-  const checkAuth = async () => {
-    setIsCustomLoading(true);
-    // Artificial delay for splash screen (2 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  const checkAuth = async (isBackground = false) => {
+    if (!isBackground) {
+      setIsCustomLoading(true);
+      // Artificial delay for splash screen (2 seconds) only on specific pages
+      if (location.pathname === '/' || location.pathname === '/students') {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
 
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -53,19 +63,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(true);
         setUser(JSON.parse(storedUser));
       }
-    } else {
-      setIsAuthenticated(false);
-      setUser(null);
     }
-    setIsCustomLoading(false);
+
+    if (!isBackground) {
+      setIsCustomLoading(false);
+    }
   };
 
   useEffect(() => {
     // Initial check
-    checkAuth();
+    checkAuth(false);
 
     // Set up interval to check token expiration every minute
-    const interval = setInterval(checkAuth, 60000);
+    const interval = setInterval(() => checkAuth(true), 60000);
 
     // Listen for unauthorized events (401) from axios
     const handleAuthError = () => {
@@ -84,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setIsAuthenticated(true);
+    setIsLoginModalOpen(false);
     showSuccess("Welcome back!", `Signed in as ${userData.username}`);
   };
 
@@ -119,9 +130,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   };
+const openLoginModal = () => setIsLoginModalOpen(true);
+  const closeLoginModal = () => setIsLoginModalOpen(false);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isCustomLoading, login, logout, deleteAccount }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isCustomLoading, login, logout, deleteAccount, isLoginModalOpen, openLoginModal, closeLoginModal }}>
       {children}
     </AuthContext.Provider>
   );
