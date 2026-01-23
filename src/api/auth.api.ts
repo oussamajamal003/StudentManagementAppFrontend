@@ -14,6 +14,7 @@ export interface SignupPayload {
 
 export const authApi = {
   login: async (email: string, password: string) => {
+    // Explicit types added
     const response = await axiosClient.post('/auth/login', { email, password });
     return response.data;
   },

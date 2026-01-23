@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Student } from '../../api/students.api';
+import { type Student } from '../../api/students.api';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
